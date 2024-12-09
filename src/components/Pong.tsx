@@ -4,8 +4,14 @@ export default function Pong() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dpr = window.devicePixelRatio || 1;
 
-  const platformHeight = 200;
-  const platformSpeed = 8;
+  const platformHeight = 170;
+  const platformSpeed = 10;
+  const ballSpeed = 12;
+
+  let ballX = 0,
+    ballY = 0,
+    ballSpeedX = 0,
+    ballSpeedY = 0;
 
   let leftPlatformVerticalPosition = 0,
     rightPlatformVerticalPosition = 0;
@@ -16,9 +22,12 @@ export default function Pong() {
 
   const render = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => {
     const width = canvas.width / dpr;
-    const horizontalCenter = width / 2;
     const height = canvas.height / dpr;
+    const horizontalCenter = width / 2;
     const verticalCenter = height / 2;
+
+    ballX = ballX || horizontalCenter;
+    ballY = ballY || verticalCenter;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -32,12 +41,14 @@ export default function Pong() {
     ctx.font = "bold 40px Unbounded";
     ctx.fillText("PONG: та самая классика", horizontalCenter, 70);
 
-    // Circle
+    ctx.font = "500 20px Unbounded";
+    ctx.fillText("Левый игрок: 0", 300, 150);
+    ctx.fillText("Правый игрок: 0", width - 300, 150);
+
     ctx.beginPath();
-    ctx.arc(horizontalCenter, verticalCenter, 10, 0, 2 * Math.PI);
+    ctx.arc(ballX, ballY, 10, 0, 2 * Math.PI);
     ctx.fill();
 
-    // Platforms
     leftPlatformVerticalPosition =
       leftPlatformVerticalPosition ||
       initializePlatformPosition(verticalCenter);
@@ -94,6 +105,17 @@ export default function Pong() {
     let isMovingUpRight = false;
     let isMovingDownRight = false;
 
+    const getRandomAngle = () => {
+      const angle = (Math.random() * Math.PI) / 4 - Math.PI / 8;
+      return angle;
+    };
+
+    const initializeBallSpeed = () => {
+      const angle = getRandomAngle();
+      ballSpeedX = ballSpeed * Math.cos(angle);
+      ballSpeedY = ballSpeed * Math.sin(angle);
+    };
+
     const update = () => {
       if (isMovingUpLeft) {
         leftPlatformVerticalPosition -= platformSpeed;
@@ -107,6 +129,41 @@ export default function Pong() {
         rightPlatformVerticalPosition += platformSpeed;
       }
 
+      ballX += ballSpeedX;
+      ballY += ballSpeedY;
+
+      if (ballY - 10 <= 0 || ballY + 10 >= window.innerHeight) {
+        ballSpeedY = -ballSpeedY;
+      }
+
+      if (ballX - 10 <= 0 || ballX + 10 >= window.innerWidth) {
+        ballSpeedX = -ballSpeedX;
+      }
+
+      if (
+        ballX - 10 <= 110 &&
+        ballY >= leftPlatformVerticalPosition &&
+        ballY <= leftPlatformVerticalPosition + platformHeight
+      ) {
+        ballSpeedX = Math.abs(ballSpeedX);
+        const offset =
+          (ballY - (leftPlatformVerticalPosition + platformHeight / 2)) /
+          (platformHeight / 2);
+        ballSpeedY = offset * ballSpeed;
+      }
+
+      if (
+        ballX + 10 >= window.innerWidth - 110 &&
+        ballY >= rightPlatformVerticalPosition &&
+        ballY <= rightPlatformVerticalPosition + platformHeight
+      ) {
+        ballSpeedX = -Math.abs(ballSpeedX);
+        const offset =
+          (ballY - (rightPlatformVerticalPosition + platformHeight / 2)) /
+          (platformHeight / 2);
+        ballSpeedY = offset * ballSpeed;
+      }
+
       if (canvasRef.current) {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d");
@@ -117,6 +174,8 @@ export default function Pong() {
 
       requestAnimationFrame(update);
     };
+
+    initializeBallSpeed();
 
     window.addEventListener("keydown", (event) => {
       if (event.code === "KeyW") {
