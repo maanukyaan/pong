@@ -4,9 +4,15 @@ export default function Pong() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dpr = window.devicePixelRatio || 1;
 
+  const platformHeight = 200;
+  const platformSpeed = 8;
+
   let leftPlatformVerticalPosition = 0,
     rightPlatformVerticalPosition = 0;
-  const platformSpeed = 7;
+
+  const initializePlatformPosition = (verticalCenter: number) => {
+    return verticalCenter - platformHeight / 2;
+  };
 
   const render = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => {
     const width = canvas.width / dpr;
@@ -32,23 +38,33 @@ export default function Pong() {
     ctx.fill();
 
     // Platforms
-    const platformHeight = 200;
-    const platformCenter = verticalCenter - platformHeight / 2;
     leftPlatformVerticalPosition =
-      leftPlatformVerticalPosition === 0
-        ? platformCenter
-        : leftPlatformVerticalPosition;
+      leftPlatformVerticalPosition ||
+      initializePlatformPosition(verticalCenter);
     rightPlatformVerticalPosition =
-      rightPlatformVerticalPosition === 0
-        ? platformCenter
-        : rightPlatformVerticalPosition;
+      rightPlatformVerticalPosition ||
+      initializePlatformPosition(verticalCenter);
 
-    // First player platform
-    ctx.roundRect(100, leftPlatformVerticalPosition, 10, 200, [6]);
+    leftPlatformVerticalPosition = Math.max(
+      1,
+      Math.min(leftPlatformVerticalPosition, height - platformHeight)
+    );
+
+    rightPlatformVerticalPosition = Math.max(
+      1,
+      Math.min(rightPlatformVerticalPosition, height - platformHeight)
+    );
+
+    ctx.roundRect(100, leftPlatformVerticalPosition, 10, platformHeight, [6]);
     ctx.fill();
 
-    // Second player platform
-    ctx.roundRect(width - 110, rightPlatformVerticalPosition, 10, 200, [6]);
+    ctx.roundRect(
+      width - 110,
+      rightPlatformVerticalPosition,
+      10,
+      platformHeight,
+      [6]
+    );
     ctx.fill();
   };
 
@@ -73,21 +89,21 @@ export default function Pong() {
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
 
-    let isMovingUpLeftPlatform = false;
-    let isMovingDownLeftPlatform = false;
-    let isMovingUpRightPlatform = false;
-    let isMovingDownRightPlatform = false;
+    let isMovingUpLeft = false;
+    let isMovingDownLeft = false;
+    let isMovingUpRight = false;
+    let isMovingDownRight = false;
 
     const update = () => {
-      if (isMovingUpLeftPlatform) {
+      if (isMovingUpLeft) {
         leftPlatformVerticalPosition -= platformSpeed;
-      } else if (isMovingDownLeftPlatform) {
+      } else if (isMovingDownLeft) {
         leftPlatformVerticalPosition += platformSpeed;
       }
 
-      if (isMovingUpRightPlatform) {
+      if (isMovingUpRight) {
         rightPlatformVerticalPosition -= platformSpeed;
-      } else if (isMovingDownRightPlatform) {
+      } else if (isMovingDownRight) {
         rightPlatformVerticalPosition += platformSpeed;
       }
 
@@ -104,29 +120,29 @@ export default function Pong() {
 
     window.addEventListener("keydown", (event) => {
       if (event.code === "KeyW") {
-        isMovingUpLeftPlatform = true;
+        isMovingUpLeft = true;
       } else if (event.code === "KeyS") {
-        isMovingDownLeftPlatform = true;
+        isMovingDownLeft = true;
       }
 
       if (event.code === "ArrowUp") {
-        isMovingUpRightPlatform = true;
+        isMovingUpRight = true;
       } else if (event.code === "ArrowDown") {
-        isMovingDownRightPlatform = true;
+        isMovingDownRight = true;
       }
     });
 
     window.addEventListener("keyup", (event) => {
       if (event.code === "KeyW") {
-        isMovingUpLeftPlatform = false;
+        isMovingUpLeft = false;
       } else if (event.code === "KeyS") {
-        isMovingDownLeftPlatform = false;
+        isMovingDownLeft = false;
       }
 
       if (event.code === "ArrowUp") {
-        isMovingUpRightPlatform = false;
+        isMovingUpRight = false;
       } else if (event.code === "ArrowDown") {
-        isMovingDownRightPlatform = false;
+        isMovingDownRight = false;
       }
     });
 
