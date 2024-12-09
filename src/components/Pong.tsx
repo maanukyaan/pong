@@ -4,6 +4,10 @@ export default function Pong() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dpr = window.devicePixelRatio || 1;
 
+  let leftPlatformVerticalPosition = 0,
+    rightPlatformVerticalPosition = 0;
+  const platformSpeed = 7;
+
   const render = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => {
     const width = canvas.width / dpr;
     const horizontalCenter = width / 2;
@@ -30,13 +34,21 @@ export default function Pong() {
     // Platforms
     const platformHeight = 200;
     const platformCenter = verticalCenter - platformHeight / 2;
+    leftPlatformVerticalPosition =
+      leftPlatformVerticalPosition === 0
+        ? platformCenter
+        : leftPlatformVerticalPosition;
+    rightPlatformVerticalPosition =
+      rightPlatformVerticalPosition === 0
+        ? platformCenter
+        : rightPlatformVerticalPosition;
 
     // First player platform
-    ctx.roundRect(100, platformCenter, 10, 200, [6]);
+    ctx.roundRect(100, leftPlatformVerticalPosition, 10, 200, [6]);
     ctx.fill();
 
     // Second player platform
-    ctx.roundRect(width - 110, platformCenter, 10, 200, [6]);
+    ctx.roundRect(width - 110, rightPlatformVerticalPosition, 10, 200, [6]);
     ctx.fill();
   };
 
@@ -59,17 +71,77 @@ export default function Pong() {
     };
 
     resizeCanvas();
-
     window.addEventListener("resize", resizeCanvas);
+
+    let isMovingUpLeftPlatform = false;
+    let isMovingDownLeftPlatform = false;
+    let isMovingUpRightPlatform = false;
+    let isMovingDownRightPlatform = false;
+
+    const update = () => {
+      if (isMovingUpLeftPlatform) {
+        leftPlatformVerticalPosition -= platformSpeed;
+      } else if (isMovingDownLeftPlatform) {
+        leftPlatformVerticalPosition += platformSpeed;
+      }
+
+      if (isMovingUpRightPlatform) {
+        rightPlatformVerticalPosition -= platformSpeed;
+      } else if (isMovingDownRightPlatform) {
+        rightPlatformVerticalPosition += platformSpeed;
+      }
+
+      if (canvasRef.current) {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          render(canvas, ctx);
+        }
+      }
+
+      requestAnimationFrame(update);
+    };
+
+    window.addEventListener("keydown", (event) => {
+      if (event.code === "KeyW") {
+        isMovingUpLeftPlatform = true;
+      } else if (event.code === "KeyS") {
+        isMovingDownLeftPlatform = true;
+      }
+
+      if (event.code === "ArrowUp") {
+        isMovingUpRightPlatform = true;
+      } else if (event.code === "ArrowDown") {
+        isMovingDownRightPlatform = true;
+      }
+    });
+
+    window.addEventListener("keyup", (event) => {
+      if (event.code === "KeyW") {
+        isMovingUpLeftPlatform = false;
+      } else if (event.code === "KeyS") {
+        isMovingDownLeftPlatform = false;
+      }
+
+      if (event.code === "ArrowUp") {
+        isMovingUpRightPlatform = false;
+      } else if (event.code === "ArrowDown") {
+        isMovingDownRightPlatform = false;
+      }
+    });
+
+    requestAnimationFrame(update);
 
     return () => {
       window.removeEventListener("resize", resizeCanvas);
+      window.removeEventListener("keydown", () => {});
+      window.removeEventListener("keyup", () => {});
     };
   }, [dpr]);
 
   return (
     <canvas ref={canvasRef}>
-      Your browser does not support the HTML canvas tag.
+      Ваш браузер не поддерживает тег HTML canvas.
     </canvas>
   );
 }
